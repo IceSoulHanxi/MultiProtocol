@@ -1,0 +1,4 @@
+name: BungeeWebsocket
+version: '1.0'
+main: com.ixnah.mc.ws.BungeeWebsocket
+author: Hanxi

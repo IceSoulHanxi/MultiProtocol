@@ -1,0 +1,28 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
+    id 'java'
+}
+
+group 'com.ixnah.mc'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.ow2.asm:asm-all:5.2'
+    compile 'io.earcam.wrapped:com.sun.tools.attach:1.8.0_jdk8u172-b11'
+    compileOnly files("libs/HexaCord-v148.jar")
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+shadowJar {
+    manifest.attributes["Can-Redefine-Classes"] = 'true'
+    manifest.attributes["Can-Retransform-Classes"] = 'true'
+    manifest.attributes["Agent-Class"] = 'com.ixnah.mc.ws.agent.AttachAgent'
+    relocate 'org.objectweb.asm', 'com.ixnah.asm'
+}
