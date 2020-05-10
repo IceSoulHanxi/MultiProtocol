@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.ixnah.mc'
-version '1.0-SNAPSHOT'
+version '1.1-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
@@ -15,9 +15,15 @@ repositories {
 dependencies {
     compile 'org.ow2.asm:asm-all:5.2'
     compile 'io.earcam.wrapped:com.sun.tools.attach:1.8.0_jdk8u172-b11'
+    compile 'io.jsonwebtoken:jjwt-api:0.11.1'
+    runtime 'io.jsonwebtoken:jjwt-impl:0.11.1'
+    runtime('io.jsonwebtoken:jjwt-gson:0.11.1') {
+        exclude group: 'com.google.code.gson', module: 'gson'
+    }
     compileOnly files("libs/HexaCord-v148.jar")
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile 'com.google.code.gson:gson:2.8.5'
 }
 
 shadowJar {

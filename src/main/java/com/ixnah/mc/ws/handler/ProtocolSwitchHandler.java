@@ -5,8 +5,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
-import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class ProtocolSwitchHandler extends SimpleChannelInboundHandler<Object> {
     private static final String GET = "GET";
     private static final List<String> removeChannelList = Arrays.asList("frame-prepender", "packet-encoder", "legacy-kick");
 
-    private static final boolean debug = true;
+    private static final boolean debug = false;
 
     public ProtocolSwitchHandler() {
         super(false);
@@ -34,7 +34,7 @@ public class ProtocolSwitchHandler extends SimpleChannelInboundHandler<Object> {
             if (GET.equalsIgnoreCase(new String(checkBytes))) {
 //                System.out.println("[BungeeWebsocket] Detect HTTP header! " + ctx.channel().remoteAddress());
                 if (debug) {
-                    String context = ((ByteBuf) msg).markReaderIndex().toString();
+                    String context = ((ByteBuf) msg).markReaderIndex().toString(Charset.defaultCharset());
                     ((ByteBuf) msg).resetReaderIndex();
                     System.out.println(context);
                 }

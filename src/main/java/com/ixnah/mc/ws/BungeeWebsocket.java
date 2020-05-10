@@ -4,6 +4,7 @@ import com.sun.tools.attach.AgentInitializationException;
 import com.sun.tools.attach.AgentLoadException;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
+import net.md_5.bungee.BungeeCord;
 import net.md_5.bungee.api.plugin.Plugin;
 
 import java.io.File;
@@ -25,7 +26,7 @@ public class BungeeWebsocket extends Plugin {
                     .replace("file:", "").replace("jar:", "");
             machine.loadAgent(new File(path).getAbsolutePath());
         } catch (AttachNotSupportedException | IOException | AgentLoadException | AgentInitializationException e) {
-            System.err.println("[BungeeWebsocket] Only supports JDK8!");
+            BungeeCord.getInstance().getLogger().severe("[BungeeWebsocket] Only supports JDK8!");
             e.printStackTrace();
         } finally {
             if (machine != null) {
