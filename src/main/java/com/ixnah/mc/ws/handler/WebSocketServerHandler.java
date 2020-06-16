@@ -175,7 +175,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
         }
     }
 
-    private static final List<ByteBuf> frameContents = new ArrayList<>();
+    private final List<ByteBuf> frameContents = new ArrayList<>();
 
     private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
         if (frame instanceof CloseWebSocketFrame) {
@@ -187,12 +187,10 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
             return;
         }
 
-        synchronized (frameContents) { // TODO: 如果在同一线程则不用加锁
-            frameContents.add(frame.content());
-            if (frame.isFinalFragment()) {
-                ctx.fireChannelRead(Unpooled.wrappedBuffer(frameContents.toArray(new ByteBuf[0])));
-                frameContents.clear();
-            }
+        frameContents.add(frame.content());
+        if (frame.isFinalFragment()) {
+            ctx.fireChannelRead(Unpooled.wrappedBuffer(frameContents.toArray(new ByteBuf[0])));
+            frameContents.clear();
         }
     }
 
