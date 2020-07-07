@@ -10,6 +10,7 @@ import net.md_5.bungee.api.plugin.Plugin;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.net.URLDecoder;
 
 /**
  * @author 寒兮
@@ -24,7 +25,7 @@ public class BungeeWebsocket extends Plugin {
             machine = VirtualMachine.attach(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]);
             String path = BungeeWebsocket.class.getProtectionDomain().getCodeSource().getLocation().getPath().split("!")[0]
                     .replace("file:", "").replace("jar:", "");
-            machine.loadAgent(new File(path).getAbsolutePath());
+            machine.loadAgent(new File(URLDecoder.decode(path, "UTF-8")).getAbsolutePath());
         } catch (AttachNotSupportedException | IOException | AgentLoadException | AgentInitializationException e) {
             BungeeCord.getInstance().getLogger().severe("[BungeeWebsocket] Only supports JDK8!");
             e.printStackTrace();
