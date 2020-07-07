@@ -10,8 +10,6 @@ jobs:
   build:
     name: Upload Release Asset
     runs-on: ubuntu-latest
-    outputs:
-      releaseFile
     steps:
       - uses: actions/checkout@v2
       - name: Set up JDK 1.8
@@ -26,7 +24,7 @@ jobs:
         run: |
           chmod +x gradlew && ./gradlew build
           cd ./build/libs/
-          echo ::set-output name=release::find . -maxdepth 1 -name "BungeeWebsocket*.jar" -not -name "*-nolib*" | cut -c 3-
+          echo ::set-output name=release::`find . -maxdepth 1 -name "BungeeWebsocket*.jar" -not -name "*-nolib*" | cut -c 3-`
 
       - name: Create Release
         id: create_release
