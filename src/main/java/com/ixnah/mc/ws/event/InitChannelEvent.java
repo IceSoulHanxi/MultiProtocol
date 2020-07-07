@@ -1,6 +1,6 @@
 package com.ixnah.mc.ws.event;
-import	io.netty.channel.Channel;
 
+import io.netty.channel.Channel;
 import net.md_5.bungee.api.plugin.Event;
 
 /**

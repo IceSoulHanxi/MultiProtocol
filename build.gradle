@@ -10,6 +10,7 @@ sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
 }
 
 dependencies {
@@ -20,13 +21,20 @@ dependencies {
     runtime('io.jsonwebtoken:jjwt-gson:0.11.1') {
         exclude group: 'com.google.code.gson', module: 'gson'
     }
-    compileOnly files("libs/HexaCord-v148.jar")
+    compileOnly 'net.md-5:bungeecord-api:1.16-R0.1'
+    compileOnly 'io.netty:netty-codec-http:4.1.49.Final'
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile 'com.google.code.gson:gson:2.8.5'
+    testCompileOnly files("libs/HexaCord-v148.jar")
+}
+
+jar {
+    archiveClassifier.set("nolib")
 }
 
 shadowJar {
+    archiveClassifier.set("")
     manifest.attributes["Can-Redefine-Classes"] = 'true'
     manifest.attributes["Can-Retransform-Classes"] = 'true'
     manifest.attributes["Agent-Class"] = 'com.ixnah.mc.ws.agent.AttachAgent'

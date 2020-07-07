@@ -10,9 +10,7 @@ import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.*;
 import io.netty.util.AttributeKey;
 import io.netty.util.CharsetUtil;
-import net.md_5.bungee.BungeeCord;
 import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.netty.PipelineUtils;
 import net.md_5.bungee.protocol.KickStringWriter;
 import net.md_5.bungee.protocol.MinecraftEncoder;
 import net.md_5.bungee.protocol.Protocol;
@@ -133,7 +131,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
             realRemoteAddress = InetAddress.getByName(ip);
             String id = claims.get("UUID", String.class);
             if (!ipMap.getOrDefault(id, "0.0.0.0").equals(ip)) {
-                BungeeCord.getInstance().getLogger().info("[WebSocket] Player[" + id + "] connect from " + realRemoteAddress);
+                ProxyServer.getInstance().getLogger().info("[WebSocket] Player[" + id + "] connect from " + realRemoteAddress);
                 ipMap.put(id, ip);
             }
         } catch (Throwable t) {
@@ -153,10 +151,11 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
                 // 握手成功之后,业务逻辑
                 if (framePrepender == null) {
                     try {
-                        Field framePrependerField = PipelineUtils.class.getDeclaredField("framePrepender");
+                        Field framePrependerField = Class.forName("net.md_5.bungee.netty.PipelineUtils")
+                                .getDeclaredField("framePrepender");
                         framePrependerField.setAccessible(true);
                         framePrepender = (ChannelHandler) framePrependerField.get(null);
-                    } catch (NoSuchFieldException | IllegalAccessException e) {
+                    } catch (NoSuchFieldException | IllegalAccessException | ClassNotFoundException e) {
                         e.printStackTrace();
                     }
                 }

@@ -41,9 +41,9 @@ public class ProtocolSwitchHandler extends SimpleChannelInboundHandler<Object> {
                     ctx.pipeline().remove(removeChannel);
                 }
                 ctx.channel().pipeline()
-                        .addAfter("ProtocolSwitch","WebSocketServerHandler", new WebSocketServerHandler())
-                        .addAfter("ProtocolSwitch","HttpObjectAggregator", new HttpObjectAggregator(65536))
-                        .addAfter("ProtocolSwitch","HttpServerCodec", new HttpServerCodec());
+                        .addAfter("ProtocolSwitch", "WebSocketServerHandler", new WebSocketServerHandler())
+                        .addAfter("ProtocolSwitch", "HttpObjectAggregator", new HttpObjectAggregator(65536))
+                        .addAfter("ProtocolSwitch", "HttpServerCodec", new HttpServerCodec());
             }
         }
         ctx.channel().pipeline().remove(this);
