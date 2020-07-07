@@ -8,6 +8,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.*;
+import io.netty.util.AttributeKey;
 import io.netty.util.CharsetUtil;
 import net.md_5.bungee.BungeeCord;
 import net.md_5.bungee.api.ProxyServer;
@@ -16,6 +17,7 @@ import net.md_5.bungee.protocol.KickStringWriter;
 import net.md_5.bungee.protocol.MinecraftEncoder;
 import net.md_5.bungee.protocol.Protocol;
 
+import javax.crypto.SecretKey;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -36,7 +38,7 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> {
 
     private static final Map<String, String> ipMap = new ConcurrentHashMap<>();
-    private static final byte[] jwtKey = UUID.randomUUID().toString().replace("-", "").getBytes();
+    private static final SecretKey jwtKey = Keys.hmacShaKeyFor(UUID.randomUUID().toString().replace("-", "").getBytes());
     private WebSocketServerHandshaker handshaker;
 
     public WebSocketServerHandler() {
@@ -50,7 +52,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
-        // 拦截ChannelWrapper初始化
+        // 推迟ChannelWrapper初始化到setRealRemoteAddress()以修改RemoteAddress
     }
 
     @Override
@@ -71,7 +73,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
             return;
         }
 
-        // Allow only GET methods.
+        // 仅允许GET请求
         if (httpRequest.method() != GET) {
             sendHttpResponse(ctx, httpRequest, new DefaultFullHttpResponse(HTTP_1_1, FORBIDDEN));
             return;
@@ -82,12 +84,18 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
             return;
         }
 
+        // 检测是否携带Token(UUID或者Jwt)
         String token = httpRequest.headers().get(AUTHORIZATION);
         if (token == null || token.isEmpty()) {
             sendHttpResponse(ctx, httpRequest, new DefaultFullHttpResponse(HTTP_1_1, UNAUTHORIZED));
             return;
         }
 
+        // 通过UUID与CDN传来的真实IP生成Jwt
+        // 由于Websocket经过CDN后,无法直接获取到客户端的真实IP
+        // 所以说需要通过增加一次正常HTTP请求,以通过CDN传来的Header获取客户端的真实IP
+        // 目前使用的Jwt来进行参数传递,可能存在IP伪造的情况
+        // TODO: HTTP请求改为长链接,直接在同一条Channel上升级为Websocket
         String upgrade = httpRequest.headers().get(UPGRADE);
         if (upgrade == null || upgrade.isEmpty()) {
             try {
@@ -101,7 +109,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
                         token.substring(16, 20) + "-" +
                         token.substring(20, 32);
                 UUID uuid = UUID.fromString(id);
-                byte[] jwt = Jwts.builder().signWith(Keys.hmacShaKeyFor(jwtKey))
+                byte[] jwt = Jwts.builder().signWith(jwtKey)
                         .setExpiration(new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(90)))
                         .claim("UUID", uuid)
                         .claim("IP", getRemoteAddress(ctx, httpRequest))
@@ -117,9 +125,10 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
             }
         }
 
+        // 目前,从这里开始和前面的HTTP请求不在同一条Channel
         InetAddress realRemoteAddress;
         try {
-            Claims claims = Jwts.parserBuilder().setSigningKey(Keys.hmacShaKeyFor(jwtKey)).build().parseClaimsJws(token).getBody();
+            Claims claims = Jwts.parserBuilder().setSigningKey(jwtKey).build().parseClaimsJws(token).getBody();
             String ip = claims.get("IP", String.class);
             realRemoteAddress = InetAddress.getByName(ip);
             String id = claims.get("UUID", String.class);
@@ -139,9 +148,9 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
         if (handshaker == null) {
             WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
         } else {
-            ChannelFuture channelFuture = handshaker.handshake(ctx.channel(), httpRequest);
-            // 握手成功之后,业务逻辑
-            if (channelFuture.syncUninterruptibly().isSuccess()) {
+            ChannelFuture handshakeFuture = handshaker.handshake(ctx.channel(), httpRequest).syncUninterruptibly();
+            if (handshakeFuture.isSuccess()) {
+                // 握手成功之后,业务逻辑
                 if (framePrepender == null) {
                     try {
                         Field framePrependerField = PipelineUtils.class.getDeclaredField("framePrepender");
@@ -157,6 +166,10 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
                         .addBefore("inbound-boss", "frame-prepender", framePrepender)
                         .addAfter("frame-prepender", "packet-encoder", new MinecraftEncoder(Protocol.HANDSHAKE, true, ProxyServer.getInstance().getProtocolVersion()))
                         .addBefore("frame-prepender", "legacy-kick", new KickStringWriter());
+            } else {
+                // 握手失败,输出异常
+                handshakeFuture.cause().printStackTrace();
+                ctx.channel().closeFuture();
             }
         }
     }
@@ -169,9 +182,9 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
             HttpUtil.setContentLength(res, res.content().readableBytes());
         }
 
-        ChannelFuture f = ctx.channel().writeAndFlush(res);
+        ChannelFuture future = ctx.channel().writeAndFlush(res);
         if (!HttpUtil.isKeepAlive(req) || res.status().code() != 200) {
-            f.addListener(ChannelFutureListener.CLOSE);
+            future.addListener(ChannelFutureListener.CLOSE);
         }
     }
 
@@ -218,17 +231,20 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 
     private static void setRealRemoteAddress(ChannelHandlerContext ctx, InetAddress realRemoteAddress) {
         Channel channel = ctx.channel();
-        InetSocketAddress cdnAddress = ((InetSocketAddress) channel.remoteAddress());
-        InetSocketAddress socketAddress = new InetSocketAddress(realRemoteAddress, cdnAddress.getPort());
+        InetSocketAddress proxyAddress = ((InetSocketAddress) channel.remoteAddress());
+        InetSocketAddress realAddress = new InetSocketAddress(realRemoteAddress, proxyAddress.getPort());
+        channel.attr(AttributeKey.valueOf("realAddress")).set(realAddress.toString());
+        channel.attr(AttributeKey.valueOf("proxyAddress")).set(proxyAddress.toString());
         try {
             if (remoteAddressField == null) {
                 remoteAddressField = AbstractChannel.class.getDeclaredField("remoteAddress");
                 remoteAddressField.setAccessible(true);
             }
-            remoteAddressField.set(channel, socketAddress);
+            remoteAddressField.set(channel, realAddress);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             e.printStackTrace();
         }
+        // 在此处向后面的Handler传递Active信号
         ctx.fireChannelActive();
     }
 }

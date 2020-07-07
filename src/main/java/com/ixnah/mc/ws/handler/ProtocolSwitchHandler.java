@@ -32,7 +32,6 @@ public class ProtocolSwitchHandler extends SimpleChannelInboundHandler<Object> {
             byte[] checkBytes = new byte[GET.length()];
             ((ByteBuf) msg).markReaderIndex().readBytes(checkBytes).resetReaderIndex();
             if (GET.equalsIgnoreCase(new String(checkBytes))) {
-//                System.out.println("[BungeeWebsocket] Detect HTTP header! " + ctx.channel().remoteAddress());
                 if (debug) {
                     String context = ((ByteBuf) msg).markReaderIndex().toString(Charset.defaultCharset());
                     ((ByteBuf) msg).resetReaderIndex();
@@ -43,7 +42,6 @@ public class ProtocolSwitchHandler extends SimpleChannelInboundHandler<Object> {
                 }
                 ctx.channel().pipeline()
                         .addAfter("ProtocolSwitch","WebSocketServerHandler", new WebSocketServerHandler())
-//                        .addAfter("ProtocolSwitch","WebSocketServerCompressionHandler", new WebSocketServerCompressionHandler())
                         .addAfter("ProtocolSwitch","HttpObjectAggregator", new HttpObjectAggregator(65536))
                         .addAfter("ProtocolSwitch","HttpServerCodec", new HttpServerCodec());
             }

@@ -1,5 +1,6 @@
 package com.ixnah.mc.ws;
 
+import com.ixnah.mc.ws.event.EventListener;
 import com.sun.tools.attach.AgentInitializationException;
 import com.sun.tools.attach.AgentLoadException;
 import com.sun.tools.attach.AttachNotSupportedException;
@@ -19,7 +20,13 @@ import java.net.URLDecoder;
  */
 public class BungeeWebsocket extends Plugin {
 
-    static {
+    @Override
+    public void onLoad() {
+        tryAttach();
+        BungeeCord.getInstance().getPluginManager().registerListener(this, new EventListener());
+    }
+
+    public static void tryAttach() {
         VirtualMachine machine = null;
         try {
             machine = VirtualMachine.attach(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]);

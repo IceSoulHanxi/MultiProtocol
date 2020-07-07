@@ -21,16 +21,19 @@ import java.util.jar.JarFile;
  * @author 寒兮
  * @version 1.0
  * @date 2020/3/31 13:10
+ * <p>
+ * 该类会被挂载到Jvm默认Classloader
  */
 public class AttachAgent {
 
+    @SuppressWarnings("unchecked")
     public static void agentmain(String args, Instrumentation inst) {
         System.out.println("[BungeeWebsocket] AttachAgent loaded!");
-        String PipelineUtils$Base = PipelineUtils.Base.class.getProtectionDomain().getCodeSource().getLocation().getPath()
+        String bungeeCordPath = PipelineUtils.Base.class.getProtectionDomain().getCodeSource().getLocation().getPath()
                 .split("!")[0].replace("file:", "").replace("jar:", "");
         InputStream stream = PipelineUtils.Base.class.getClassLoader().getResourceAsStream("PipelineUtils$Base.class");
         ClassReader reader = null;
-        try (JarFile jarFile = new JarFile(URLDecoder.decode(PipelineUtils$Base, "UTF-8"))) {
+        try (JarFile jarFile = new JarFile(URLDecoder.decode(bungeeCordPath, "UTF-8"))) {
             Enumeration<JarEntry> entries = jarFile.entries();
             while (entries.hasMoreElements()) {
                 JarEntry entry = entries.nextElement();
@@ -48,8 +51,9 @@ public class AttachAgent {
         reader.accept(node, 0);
         for (MethodNode methodNode : ((List<MethodNode>) node.methods)) {
             if (methodNode.name.equals("initChannel")) {
+                System.out.println("[BungeeWebsocket] Method found: " + node.name + "." + methodNode.name);
                 InsnList insn = methodNode.instructions;
-                insn.insert(new MethodInsnNode(Opcodes.INVOKESTATIC, "com/ixnah/mc/ws/ChannelHandler", "initChannel", "(Lio/netty/channel/Channel;)V", false));
+                insn.insert(new MethodInsnNode(Opcodes.INVOKESTATIC, "com/ixnah/mc/ws/agent/InitChannelHandler", "initChannel", "(Lio/netty/channel/Channel;)V", false));
                 insn.insert(new VarInsnNode(Opcodes.ALOAD, 1));
                 break;
             }
