@@ -30,5 +30,9 @@ shadowJar {
     manifest.attributes["Can-Redefine-Classes"] = 'true'
     manifest.attributes["Can-Retransform-Classes"] = 'true'
     manifest.attributes["Agent-Class"] = 'com.ixnah.mc.ws.agent.AttachAgent'
-    relocate 'org.objectweb.asm', 'com.ixnah.asm'
+    relocate 'org.objectweb.asm', 'com.ixnah.org.objectweb.asm'
+}
+
+artifacts {
+    archives shadowJar
 }
