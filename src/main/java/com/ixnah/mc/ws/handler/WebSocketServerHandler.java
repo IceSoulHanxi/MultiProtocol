@@ -71,7 +71,6 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
     }
 
     private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest request) {
-        System.out.println(request);
         // Handle a bad request.
         if (!request.decoderResult().isSuccess()) {
             sendResponse(request, new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST));
