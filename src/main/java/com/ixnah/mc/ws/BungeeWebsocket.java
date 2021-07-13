@@ -34,7 +34,7 @@ public class BungeeWebsocket extends Plugin {
                     .replace("file:", "").replace("jar:", "");
             machine.loadAgent(new File(URLDecoder.decode(path, "UTF-8")).getAbsolutePath());
         } catch (AttachNotSupportedException | IOException | AgentLoadException | AgentInitializationException e) {
-            ProxyServer.getInstance().getLogger().severe("[BungeeWebsocket] Only supports JDK8!");
+            ProxyServer.getInstance().getLogger().severe("[BungeeWebsocket] Only supports JDK! add JVM option -Djdk.attach.allowAttachSelf=true");
             e.printStackTrace();
         } finally {
             if (machine != null) {

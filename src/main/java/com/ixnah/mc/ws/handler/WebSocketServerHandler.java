@@ -102,8 +102,11 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
         String upgrade = request.headers().get(UPGRADE);
         if (upgrade == null || upgrade.isEmpty()) {
             try {
-                String id = token.substring(0, 8) + "-" + token.substring(8, 12) + "-" +
-                        token.substring(12, 16) + "-" + token.substring(16, 20) + "-" + token.substring(20, 32);
+                String id = token;
+                if (!id.contains("-")) {
+                    id = token.substring(0, 8) + "-" + token.substring(8, 12) + "-" +
+                            token.substring(12, 16) + "-" + token.substring(16, 20) + "-" + token.substring(20, 32);
+                }
                 UUID uuid = UUID.fromString(id);
                 String realRemoteAddress = getRemoteAddress(ctx, request);
                 byte[] jwt = Jwts.builder().signWith(jwtKey)
