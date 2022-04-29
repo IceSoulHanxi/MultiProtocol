@@ -1,0 +1,67 @@
+plugins {
+    id "com.github.johnrengelman.shadow" version "7.1.2"
+    id 'java'
+}
+
+group = 'com.ixnah.mc'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    maven { url = 'https://maven.aliyun.com/repository/public/' }
+    mavenCentral()
+    maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    maven { url = 'https://oss.sonatype.org/content/groups/public/' }
+    maven { url = 'https://repo.dmulloy2.net/nexus/repository/public/' }
+}
+
+dependencies {
+    compileOnly 'org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT'
+    compileOnly 'net.md-5:bungeecord-api:1.16-R0.4'
+    compileOnly 'com.comphenix.protocol:ProtocolLib:4.8.0'
+    compileOnly 'io.netty:netty-codec-http:4.1.53.Final'
+//    implementation 'com.github.marianobarrios:tls-channel:0.6.0'
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.2'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.2'
+    runtimeOnly('io.jsonwebtoken:jjwt-gson:0.11.2') {
+        exclude group: 'com.google.code.gson', module: 'gson'
+    }
+    compileOnly files('lib/BungeeCord.jar')
+    compileOnly files('lib/spigot-1.16.5.jar')
+}
+
+def targetJavaVersion = 8
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        options.release.set targetJavaVersion
+    }
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching(['plugin.yml', 'bungee.yml']) {
+        expand props
+    }
+}
+
+jar {
+    archiveClassifier.set "nolib"
+}
+
+shadowJar {
+    archiveClassifier.set ""
+}
+
+artifacts {
+    archives shadowJar
+}

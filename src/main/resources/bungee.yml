@@ -1,0 +1,5 @@
+name: MultiProtocol
+version: '${version}'
+main: com.ixnah.mc.multiprotocol.MultiProtocolBungee
+author: IceSoulHanxi
+website: https://github.com/IceSoulHanxi/MultiProtocol

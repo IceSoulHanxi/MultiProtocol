@@ -1,0 +1,7 @@
+api-version: 1.13
+name: MultiProtocol
+version: '${version}'
+main: com.ixnah.mc.multiprotocol.MultiProtocolSpigot
+depend: [ ProtocolLib ]
+authors: [ IceSoulHanxi ]
+website: https://github.com/IceSoulHanxi/MultiProtocol

@@ -1,0 +1,31 @@
+websocket:
+  enabled: false
+  # 自定义路径 例如 path: /minecraft 对应 ws://mc.ixnah.com/minecraft
+  path: /
+  # 是否通过Http请求获取客户端真实IP 例如又拍云在创建WS连接时不会携带IP信息则需要开启
+  # 开启后需要在路径后添加Query: realAddress 例如 ws://mc.ixnah.com/?realAddress
+  # 在自定义路径的同时 ws://mc.ixnah.com/minecraft?realAddress
+  ipFromHttp: false
+  # 通过Header获取客户端真实IP 越靠前优先级越高
+  realIpHeaders: [ 'X-Forwarded-For', 'X-Real-Ip' ]
+  # Http内容最大长度 过大可能会导致性能损耗
+  maxContentLength: 8192
+  # 是否开启普通Http请求回落 例如普通HTTP请求需要重定向到https://www.baidu.com/
+  fallback:
+    enabled: false
+    # 回落类型 跳转: redirect, 代理: proxy
+    type: redirect
+    # 如果需要传递路径与参数则需要添加${uri} 例如https://www.baidu.com/${uri}
+    url: https://www.baidu.com/
+  # 是否开启Https
+  ssl:
+    enabled: false
+    # 相对路径在plugins/MultiProtocol/server.keystore
+    keyStore: server.keystore
+    keyStorePassword: 123456
+    keyStoreType: JKS
+  # 是否开启WebSocket白名单
+  whitelist:
+    enabled: false # TODO: 暂未实现
+    # 使用CIDR
+    addresses: [ '127.0.0.0/8', '10.0.0.0/8', '192.168.0.0/16' ]
